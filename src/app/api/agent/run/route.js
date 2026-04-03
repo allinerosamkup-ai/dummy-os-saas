@@ -7,8 +7,8 @@ import { runOrchestrator } from "@/agents/orchestrator";
  *
  * Runs the D.U.M.M.Y. OS orchestration loop programmatically.
  *
- * Body: { input: string, context?: string }
- * Returns: { fase0, routing, skill, mode, action, result, status, next_skill }
+ * Body: { input: string, context?: string, yolo?: boolean }
+ * Returns: { fase0, routing, skill, mode, action, result, status, next_skill, preview_required }
  */
 export async function POST(request) {
   const supabase = createClient();
@@ -21,13 +21,15 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { input, context } = body;
+  const { input, context, yolo } = body;
 
   if (!input || typeof input !== "string" || input.trim().length === 0) {
     return NextResponse.json({ error: "input is required" }, { status: 400 });
   }
 
-  const result = await runOrchestrator(input.trim(), context || "");
+  // Prepend yolo trigger if caller requests it
+  const rawInput = yolo ? `yolo ${input.trim()}` : input.trim();
+  const result = await runOrchestrator(rawInput, context || "");
 
   return NextResponse.json(result);
 }
